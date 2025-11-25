@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Discord - Home</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/pages/home/css/main.css">
+    <link rel="stylesheet" href="/pages/home/css/sidebar.css">
+    <link rel="stylesheet" href="/pages/home/css/chat.css">
+    <link rel="stylesheet" href="/pages/home/css/buttons.css">
+    <link rel="stylesheet" href="/pages/home/css/modal.css">
+    <link rel="stylesheet" href="/pages/home/css/servers.css">
+    <link rel="stylesheet" href="/pages/home/css/voice.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Left Sidebar - Friends & Servers -->
+        <div id="sidebar">
+            <!-- Tab Selector -->
+            <div id="tab-selector">
+                <button class="tab-btn active" data-tab="friends" onclick="switchTab('friends')">Friends</button>
+                <button class="tab-btn" data-tab="servers" onclick="switchTab('servers')">Servers</button>
+            </div>
+
+            <!-- Friends Tab -->
+            <div id="friends-tab" class="tab-content active">
+                <div id="sidebar-header">
+                    <h3>Friends</h3>
+                    <button class="add-friend-btn" onclick="openAddFriendModal()">+ Add</button>
+                </div>
+                <div id="sidebar-content">
+                <!-- Friend Requests Section -->
+                <div class="section-title">Pending Requests (<span id="requests-count">{{ friend_requests|length }}</span>)</div>
+                <div id="requests-container">
+                    {% if friend_requests %}
+                        {% for request in friend_requests %}
+                        <div class="request-item" data-request-id="{{ request['id'] }}">
+                            <div class="request-header">
+                                <div class="avatar">
+                                    {% if request['avatar'] == 'avatar1' %}🦊
+                                    {% elif request['avatar'] == 'avatar2' %}🐼
+                                    {% elif request['avatar'] == 'avatar3' %}🦁
+                                    {% elif request['avatar'] == 'avatar4' %}🐸
+                                    {% elif request['avatar'] == 'avatar5' %}🦄
+                                    {% elif request['avatar'] == 'avatar6' %}🐲
+                                    {% else %}😊{% endif %}
+                                </div>
+                                <div class="friend-info">
+                                    <div class="friend-name">{{ request['username'] }}</div>
+                                </div>
+                            </div>
+                            <div class="request-actions">
+                                <button class="accept-btn" onclick="acceptRequest({{ request['id'] }})">Accept</button>
+                                <button class="decline-btn" onclick="declineRequest({{ request['id'] }})">Decline</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-items">No pending requests</div>
+                    {% endif %}
+                </div>
+
+                <!-- Friends List Section -->
+                <div class="section-title">All Friends (<span id="friends-count">{{ friends|length }}</span>)</div>
+                <div id="friends-container">
+                    {% if friends %}
+                        {% for friend in friends %}
+                        <div class="friend-item" 
+                             data-friend-id="{{ friend['id'] }}" 
+                             data-friend-name="{{ friend['username'] }}" 
+                             data-friend-avatar="{{ friend['avatar'] }}" 
+                             onclick="openChat({{ friend['id'] }}, '{{ friend['username'] }}', '{{ friend['avatar'] }}', '{{ friend['status'] }}')">
+                            <div class="avatar-container">
+                                <div class="avatar">
+                                    {% if friend['avatar'] == 'avatar1' %}🦊
+                                    {% elif friend['avatar'] == 'avatar2' %}🐼
+                                    {% elif friend['avatar'] == 'avatar3' %}🦁
+                                    {% elif friend['avatar'] == 'avatar4' %}🐸
+                                    {% elif friend['avatar'] == 'avatar5' %}🦄
+                                    {% elif friend['avatar'] == 'avatar6' %}🐲
+                                    {% else %}😊{% endif %}
+                                </div>
+                                <div class="status-indicator status-{{ friend['status'] }}"></div>
+                            </div>
+                            <div class="friend-info">
+                                <div class="friend-name">{{ friend['username'] }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-items">No friends yet. Add some!</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+            <!-- Servers Tab -->
+            <div id="servers-tab" class="tab-content">
+                <div id="sidebar-header">
+                    <h3>My Servers</h3>
+                    <button class="add-friend-btn" onclick="openCreateServerModal()">+ Create</button>
+                </div>
+                <div id="sidebar-content">
+                    <!-- Server Invites Section -->
+                    <div class="section-title">Pending Invites (<span id="server-invites-count">{{ server_invites|length }}</span>)</div>
+                    <div id="server-invites-container">
+                        {% if server_invites %}
+                            {% for invite in server_invites %}
+                            <div class="request-item" data-invite-id="{{ invite['id'] }}">
+                                <div class="request-header">
+                                    <div class="avatar">🏠</div>
+                                    <div class="friend-info">
+                                        <div class="friend-name">{{ invite['server_name'] }}</div>
+                                        <div style="font-size: 0.8rem; color: #96989d;">from {{ invite['from_username'] }}</div>
+                                    </div>
+                                </div>
+                                <div class="request-actions">
+                                    <button class="accept-btn" onclick="acceptServerInvite({{ invite['id'] }})">Accept</button>
+                                    <button class="decline-btn" onclick="declineServerInvite({{ invite['id'] }})">Decline</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-items">No pending invites</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Servers List Section -->
+                    <div class="section-title">All Servers (<span id="servers-count">{{ servers|length }}</span>)</div>
+                    <div id="servers-container">
+                        {% if servers %}
+                            {% for server in servers %}
+                            <div class="friend-item server-item" 
+                                 data-server-id="{{ server['id'] }}" 
+                                 data-is-owner="{{ server['is_owner'] }}"
+                                 onclick="openServer({{ server['id'] }}, '{{ server['name'] }}', {{ server['is_owner'] }})">
+                                <div class="avatar-container">
+                                    <div class="avatar">🏠</div>
+                                    {% if server['is_owner'] %}
+                                    <div class="owner-badge" title="Owner">👑</div>
+                                    {% endif %}
+                                </div>
+                                <div class="friend-info">
+                                    <div class="friend-name">{{ server['name'] }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-items">No servers yet. Create one!</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="main-content">
+            <header>
+                <div class="header-left">
+                    <div class="user-info">
+                        <div class="avatar">
+                            {% if user['avatar'] == 'avatar1' %}🦊
+                            {% elif user['avatar'] == 'avatar2' %}🐼
+                            {% elif user['avatar'] == 'avatar3' %}🦁
+                            {% elif user['avatar'] == 'avatar4' %}🐸
+                            {% elif user['avatar'] == 'avatar5' %}🦄
+                            {% elif user['avatar'] == 'avatar6' %}🐲
+                            {% else %}😊{% endif %}
+                        </div>
+                        <span>{{ user['username'] }}</span>
+                    </div>
+                    <select class="status-selector" id="status-selector" onchange="updateStatus()">
+                        <option value="online" {% if user.get('status', 'online') == 'online' %}selected{% endif %}>🟢 Online</option>
+                        <option value="invisible" {% if user.get('status', 'online') == 'invisible' %}selected{% endif %}>⚫ Invisible</option>
+                        <option value="offline" {% if user.get('status', 'online') == 'offline' %}selected{% endif %}>⚪ Offline</option>
+                    </select>
+                </div>
+                <button class="logout-btn" onclick="location.href='/logout'">Logout</button>
+            </header>
+            
+            <div id="content-area">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-message">👋 Welcome to Mini Discord!</div>
+                    <div style="color: #96989d;">Select a friend to start chatting</div>
+                </div>
+
+                <!-- Chat Window -->
+                <div id="chat-window">
+                    <div class="chat-header">
+                        <div class="chat-header-left">
+                            <div class="avatar-container">
+                                <div class="avatar" id="chat-friend-avatar">😊</div>
+                                <div class="status-indicator" id="chat-friend-status"></div>
+                            </div>
+                            <span id="chat-friend-name" style="color: #fff; font-weight: 600;"></span>
+                        </div>
+                        <div class="chat-header-right">
+                            <button class="call-icon" id="voice-call-btn" title="Voice Call" onclick="startCall()">�</button>
+                            <button class="call-icon" id="invite-to-server-btn" title="Invite to Server" onclick="openInviteToServerModal()" style="display: none;">➕</button>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="message-input" placeholder="Type a message...">
+                            <button id="send-btn" onclick="sendMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Friend Modal -->
+    <div id="addFriendModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Friend</h2>
+            </div>
+            <form id="add-friend-form">
+                <div class="form-group">
+                    <label for="friend-username">Friend's Username</label>
+                    <input type="text" id="friend-username" name="username" required placeholder="Enter username">
+                    <div id="add-friend-error" class="error-message"></div>
+                    <div id="add-friend-success" class="success-message"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="send-btn">Send Request</button>
+                    <button type="button" class="cancel-btn" onclick="closeAddFriendModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Server Modal -->
+    <div id="createServerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Server</h2>
+            </div>
+            <form id="create-server-form">
+                <div class="form-group">
+                    <label for="server-name">Server Name</label>
+                    <input type="text" id="server-name" name="name" required placeholder="Enter server name">
+                    <div id="create-server-error" class="error-message"></div>
+                    <div id="create-server-success" class="success-message"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="send-btn">Create Server</button>
+                    <button type="button" class="cancel-btn" onclick="closeCreateServerModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invite to Server Modal -->
+    <div id="inviteToServerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Invite to Server</h2>
+            </div>
+            <div id="invite-server-error" class="error-message" style="display: none;"></div>
+            <div id="invite-server-success" class="success-message" style="display: none;"></div>
+            <div id="owned-servers-list">
+                <div class="section-title">Select a server you own:</div>
+                <div id="owned-servers-container" style="max-height: 300px; overflow-y: auto;">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeInviteToServerModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server View Modal/Window -->
+    <div id="serverViewModal" class="modal server-modal">
+        <div class="modal-content server-content">
+            <div class="server-layout">
+                <!-- Channel Sidebar -->
+                <div class="server-sidebar">
+                    <div class="server-header">
+                        <h3 id="server-view-name">Server Name</h3>
+                        <button class="close-btn" onclick="closeServerView()">✕</button>
+                    </div>
+                    <div class="channels-section">
+                        <div class="section-header">
+                            <span>TEXT CHANNELS</span>
+                            <button id="create-channel-btn" class="add-channel-btn" onclick="openCreateChannelModal()" title="Create Channel" style="display: none;">+</button>
+                        </div>
+                        <div id="channels-list">
+                            <!-- Channels will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Channel Content Area -->
+                <div class="channel-content">
+                    <!-- Channel Header -->
+                    <div class="channel-header">
+                        <div class="channel-header-left">
+                            <span class="channel-icon">#</span>
+                            <span id="current-channel-name">general</span>
+                        </div>
+                    </div>
+
+                    <!-- Channel Messages -->
+                    <div class="channel-messages-area">
+                        <div id="channel-messages" class="channel-messages-list">
+                            <!-- Messages will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Channel Input -->
+                    <div class="channel-input-container">
+                        <div class="channel-input-wrapper">
+                            <input type="text" id="channel-message-input" placeholder="Message #general">
+                            <button id="channel-send-btn" onclick="sendChannelMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Members Sidebar -->
+                <div class="members-sidebar">
+                    <div class="members-header">
+                        <span>MEMBERS</span>
+                    </div>
+                    <div id="channel-members-list">
+                        <!-- Members will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Channel Modal -->
+    <div id="createChannelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Channel</h2>
+            </div>
+            <form id="create-channel-form">
+                <div class="form-group">
+                    <label for="channel-name">Channel Name</label>
+                    <input type="text" id="channel-name" name="name" required placeholder="Enter channel name">
+                    <div id="create-channel-error" class="error-message"></div>
+                    <div id="create-channel-success" class="success-message"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="send-btn">Create Channel</button>
+                    <button type="button" class="cancel-btn" onclick="closeCreateChannelModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script>
+        console.log('=== INLINE SCRIPT STARTED ===');
+        console.log('User ID:', {{ user['id'] }});
+        // Make session token available to JavaScript
+        window.SESSION_TOKEN = '{{ session_token }}';
+    </script>
+    <script type="module">
+        console.log('=== MODULE SCRIPT STARTED ===');
+        try {
+            console.log('Loading app.js...');
+            const { initApp } = await import('/pages/home/js/app.js?v=' + Date.now());
+            console.log('app.js loaded, initializing...');
+            initApp({{ user['id'] }});
+        } catch (error) {
+            console.error('Failed to load or initialize app:', error);
+            alert('Error loading application: ' + error.message + '\nCheck browser console for details.');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+/* Voice Call UI Styles */
+
+.call-ui {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #2f3136;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    min-width: 250px;
+    display: none;
+}
+
+.call-info {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.call-avatar {
+    font-size: 48px;
+    margin-bottom: 10px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.call-username {
+    color: #fff;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.call-status {
+    color: #b9bbbe;
+    font-size: 14px;
+}
+
+.call-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.call-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mute-btn {
+    background: #4E5D94;
+    color: white;
+}
+
+.mute-btn:hover {
+    background: #5865F2;
+}
+
+.mute-btn.muted {
+    background: #ED4245;
+}
+
+.mute-btn.muted:hover {
+    background: #c23638;
+}
+
+.end-call-btn {
+    background: #ED4245;
+    color: white;
+}
+
+.end-call-btn:hover {
+    background: #c23638;
+}
+
+.mute-icon {
+    font-size: 18px;
+}
+
+/* Voice Channel Styles */
+
+.channel-item.voice-active {
+    background: #5865F2;
+    color: #fff;
+}
+
+.channel-item.voice-active .channel-icon {
+    color: #fff;
+}
+
+.voice-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #43b581;
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: speaking 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes speaking {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0.6;
+    }
+}
+
+/* Member voice indicators */
+
+.member-item.in-voice {
+    background: rgba(88, 101, 242, 0.1);
+}
+
+.member-item.in-voice::after {
+    content: '🎤';
+    margin-left: auto;
+    font-size: 14px;
+}
+
+.member-item.in-voice.muted::after {
+    content: '🔇';
+}
+
+.member-item.speaking {
+    animation: speakingBorder 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes speakingBorder {
+    0% {
+        border-left: 3px solid #43b581;
+    }
+    100% {
+        border-left: 3px solid #5865F2;
+    }
+}
+
+/* Voice controls in channel */
+
+#voiceControls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#voiceControls button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+#voiceControls button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Call button styles in chat header */
+
+.call-icon {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.call-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.call-icon:active {
+    transform: scale(0.95);
+}
+
+/* Voice channel empty state */
+
+.voice-channel-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #b9bbbe;
+}
+
+.voice-channel-empty h3 {
+    color: #fff;
+    margin: 15px 0 10px;
+}
+
+.voice-channel-empty button {
+    margin-top: 20px;
+}
+
+/* Responsive adjustments */
+
+@media (max-width: 768px) {
+    .call-ui {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+    }
+    
+    .call-controls {
+        flex-direction: column;
+    }
+    
+    .call-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

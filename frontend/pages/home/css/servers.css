@@ -1,0 +1,449 @@
+/* Tab Selector Styles */
+#tab-selector {
+    display: flex;
+    background-color: #2f3136;
+    border-bottom: 2px solid #202225;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    color: #96989d;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+    background-color: #36393f;
+    color: #dcddde;
+}
+
+.tab-btn.active {
+    color: #fff;
+    border-bottom-color: #5865f2;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Server Item Styles */
+.server-item {
+    cursor: pointer;
+}
+
+.owner-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.8rem;
+    background-color: #5865f2;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Server Invite Item */
+.server-invite-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #2f3136;
+    border-radius: 5px;
+    margin-bottom: 8px;
+}
+
+.server-invite-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.server-icon {
+    font-size: 1.5rem;
+}
+
+.server-name {
+    color: #dcddde;
+    font-weight: 500;
+}
+
+.invite-btn {
+    padding: 6px 12px;
+    background-color: #5865f2;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+}
+
+.invite-btn:hover {
+    background-color: #4752c4;
+}
+
+/* Server Modal Styles */
+.server-modal {
+    display: none;
+}
+
+.server-modal[style*="display: block"] {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.server-modal .modal-content {
+    max-width: 95vw;
+    width: 1200px;
+    height: 90vh;
+    max-height: 90vh;
+    padding: 0;
+    overflow: hidden;
+}
+
+.server-layout {
+    display: flex;
+    height: 100%;
+}
+
+/* Server Sidebar (Channels) */
+.server-sidebar {
+    width: 240px;
+    background-color: #2f3136;
+    display: flex;
+    flex-direction: column;
+}
+
+.server-header {
+    padding: 16px;
+    border-bottom: 1px solid #202225;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.server-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #96989d;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #dcddde;
+}
+
+.channels-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    color: #96989d;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.add-channel-btn {
+    background: none;
+    border: none;
+    color: #96989d;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.add-channel-btn:hover {
+    color: #dcddde;
+}
+
+.channel-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    color: #96989d;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.channel-item:hover {
+    background-color: #36393f;
+    color: #dcddde;
+}
+
+.channel-item.active {
+    background-color: #404249;
+    color: #fff;
+}
+
+.channel-icon {
+    margin-right: 6px;
+    font-weight: 700;
+    color: #96989d;
+}
+
+.channel-name {
+    font-size: 0.95rem;
+}
+
+/* Channel Content Area */
+.channel-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #36393f;
+}
+
+.channel-header {
+    height: 48px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #202225;
+    background-color: #36393f;
+}
+
+.channel-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#current-channel-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.channel-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.channel-messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.message {
+    display: flex;
+    gap: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.1s;
+}
+
+.message:hover {
+    background-color: #32353b;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #5865f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.message-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.message-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.message-username {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.message-timestamp {
+    color: #72767d;
+    font-size: 0.75rem;
+}
+
+.message-text {
+    color: #dcddde;
+    font-size: 0.95rem;
+    word-wrap: break-word;
+}
+
+.channel-input-container {
+    padding: 16px;
+    background-color: #36393f;
+}
+
+.channel-input-wrapper {
+    display: flex;
+    gap: 8px;
+    background-color: #40444b;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+#channel-message-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #dcddde;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+#channel-message-input::placeholder {
+    color: #72767d;
+}
+
+#channel-send-btn {
+    padding: 8px 16px;
+    background-color: #5865f2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+#channel-send-btn:hover {
+    background-color: #4752c4;
+}
+
+/* Members Sidebar */
+.members-sidebar {
+    width: 240px;
+    background-color: #2f3136;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #202225;
+}
+
+.members-header {
+    padding: 16px;
+    border-bottom: 1px solid #202225;
+    color: #96989d;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+#channel-members-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.member-item:hover {
+    background-color: #36393f;
+}
+
+.member-avatar-container {
+    position: relative;
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #5865f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.member-name {
+    color: #96989d;
+    font-size: 0.9rem;
+}
+
+.member-item:hover .member-name {
+    color: #dcddde;
+}
+
+/* Scrollbar Styles */
+.channels-section::-webkit-scrollbar,
+.channel-messages-area::-webkit-scrollbar,
+#channel-members-list::-webkit-scrollbar,
+#owned-servers-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.channels-section::-webkit-scrollbar-track,
+.channel-messages-area::-webkit-scrollbar-track,
+#channel-members-list::-webkit-scrollbar-track,
+#owned-servers-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.channels-section::-webkit-scrollbar-thumb,
+.channel-messages-area::-webkit-scrollbar-thumb,
+#channel-members-list::-webkit-scrollbar-thumb,
+#owned-servers-container::-webkit-scrollbar-thumb {
+    background-color: #202225;
+    border-radius: 4px;
+}
+
+.channels-section::-webkit-scrollbar-thumb:hover,
+.channel-messages-area::-webkit-scrollbar-thumb:hover,
+#channel-members-list::-webkit-scrollbar-thumb:hover,
+#owned-servers-container::-webkit-scrollbar-thumb:hover {
+    background-color: #18191c;
+}

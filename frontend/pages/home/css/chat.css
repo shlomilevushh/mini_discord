@@ -1,0 +1,129 @@
+/* Chat Window Styles */
+#chat-window {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+}
+
+#chat-window.active {
+    display: flex;
+}
+
+.chat-header {
+    padding: 1rem;
+    background-color: #36393f;
+    border-bottom: 1px solid #202225;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chat-header-right {
+    display: flex;
+    gap: 1rem;
+}
+
+.call-icon {
+    background: none;
+    border: none;
+    color: #b9bbbe;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: color 0.2s;
+}
+
+.call-icon:hover {
+    color: #dcddde;
+}
+
+/* Chat Messages */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.message {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 5px;
+}
+
+.message:hover {
+    background-color: #32353b;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #5865f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.message-content {
+    flex: 1;
+}
+
+.message-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.message-author {
+    font-weight: 600;
+    color: #fff;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #72767d;
+}
+
+.message-text {
+    color: #dcddde;
+    word-wrap: break-word;
+}
+
+/* Chat Input */
+.chat-input-container {
+    padding: 1rem;
+    background-color: #36393f;
+}
+
+.chat-input-wrapper {
+    background-color: #40444b;
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+#message-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #dcddde;
+    font-size: 1rem;
+    outline: none;
+}
+
+#message-input::placeholder {
+    color: #72767d;
+}
