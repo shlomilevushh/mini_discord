@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+websockets
+python-dotenv
+jinja2
+aiofiles
+python-multipart
+itsdangerous
