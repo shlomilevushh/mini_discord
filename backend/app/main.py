@@ -3,9 +3,10 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
+from typing import Optional, Dict
 import os
 import re
+import json
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from .database import (
     init_database, create_user, verify_user, get_user_by_id, get_user_by_username,
@@ -19,6 +20,62 @@ from .database import (
 )
 
 app = FastAPI()
+
+# WebSocket Connection Manager for voice signaling
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[int, WebSocket] = {}  # user_id -> websocket
+        self.channel_connections: Dict[int, set] = {}  # channel_id -> set of user_ids
+    
+    async def connect(self, user_id: int, websocket: WebSocket):
+        """Add a user connection"""
+        self.active_connections[user_id] = websocket
+    
+    def disconnect(self, user_id: int):
+        """Remove a user connection"""
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+        # Remove from all channels
+        for channel_id in list(self.channel_connections.keys()):
+            if user_id in self.channel_connections[channel_id]:
+                self.channel_connections[channel_id].remove(user_id)
+                if not self.channel_connections[channel_id]:
+                    del self.channel_connections[channel_id]
+    
+    async def send_to_user(self, user_id: int, message: dict):
+        """Send a message to a specific user"""
+        if user_id in self.active_connections:
+            try:
+                await self.active_connections[user_id].send_json(message)
+            except:
+                self.disconnect(user_id)
+    
+    async def send_to_channel(self, channel_id: int, message: dict, exclude_user_id: Optional[int] = None):
+        """Broadcast message to all users in a channel"""
+        if channel_id in self.channel_connections:
+            for user_id in list(self.channel_connections[channel_id]):
+                if exclude_user_id and user_id == exclude_user_id:
+                    continue
+                await self.send_to_user(user_id, message)
+    
+    def join_voice_channel(self, user_id: int, channel_id: int):
+        """Add user to voice channel"""
+        if channel_id not in self.channel_connections:
+            self.channel_connections[channel_id] = set()
+        self.channel_connections[channel_id].add(user_id)
+    
+    def leave_voice_channel(self, user_id: int, channel_id: int):
+        """Remove user from voice channel"""
+        if channel_id in self.channel_connections:
+            self.channel_connections[channel_id].discard(user_id)
+            if not self.channel_connections[channel_id]:
+                del self.channel_connections[channel_id]
+    
+    def get_channel_users(self, channel_id: int) -> list:
+        """Get all users in a voice channel"""
+        return list(self.channel_connections.get(channel_id, set()))
+
+manager = ConnectionManager()
 
 # Secret key for session management (in production, use environment variable)
 SECRET_KEY = "your-secret-key-change-this-in-production"
@@ -247,6 +304,16 @@ async def send_friend_request_endpoint(
 ):
     """Send a friend request to another user"""
     result = send_friend_request(user['id'], username)
+    
+    # Send real-time notification to receiver if online
+    if result['success'] and 'receiver_id' in result:
+        await manager.send_to_user(result['receiver_id'], {
+            'type': 'new-friend-request',
+            'from_user_id': user['id'],
+            'from_username': user['username'],
+            'request_id': result.get('request_id')
+        })
+    
     return JSONResponse(result)
 
 @app.post("/api/friends/accept/{request_id}")
@@ -256,6 +323,15 @@ async def accept_friend_request_endpoint(
 ):
     """Accept a friend request"""
     result = accept_friend_request(request_id, user['id'])
+    
+    # Notify the requester that their request was accepted
+    if result['success'] and 'requester_id' in result:
+        await manager.send_to_user(result['requester_id'], {
+            'type': 'friend-request-accepted',
+            'by_user_id': user['id'],
+            'by_username': user['username']
+        })
+    
     return JSONResponse(result)
 
 @app.post("/api/friends/decline/{request_id}")
@@ -385,6 +461,19 @@ async def invite_to_server_route(
 ):
     """Invite a user to a server"""
     result = send_server_invite(server_id, current_user['id'], user_id)
+    
+    # Send real-time notification to invited user if online
+    if result['success']:
+        server = get_server_by_id(server_id)
+        await manager.send_to_user(user_id, {
+            'type': 'new-server-invite',
+            'from_user_id': current_user['id'],
+            'from_username': current_user['username'],
+            'server_id': server_id,
+            'server_name': server.get('name') if server else 'Unknown Server',
+            'invite_id': result.get('invite_id')
+        })
+    
     return JSONResponse(content=result)
 
 
@@ -419,10 +508,11 @@ async def decline_server_invite_route(
 async def create_channel_route(
     server_id: int = Form(...),
     name: str = Form(...),
+    channel_type: str = Form("voice"),
     current_user: dict = Depends(get_current_user_required)
 ):
     """Create a new channel in a server"""
-    result = create_channel(server_id, name, current_user['id'])
+    result = create_channel(server_id, name, current_user['id'], channel_type)
     return JSONResponse(content=result)
 
 
@@ -507,20 +597,26 @@ async def get_websocket_user(websocket: WebSocket) -> Optional[dict]:
     """
     session_token = websocket.query_params.get("session")
     
+    print(f"WebSocket auth attempt - Token present: {session_token is not None}")
+    
     if not session_token:
+        print("No session token in query params")
         return None
     
     user_id = verify_session(session_token)
     if not user_id:
+        print(f"Session token invalid or expired")
         return None
     
-    return get_user_by_id(user_id)
+    user = get_user_by_id(user_id)
+    print(f"WebSocket auth successful for user: {user['username'] if user else 'None'}")
+    return user
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint with proper authentication
-    Rejects connection if user is not authenticated
+    Handles voice call signaling (WebRTC) and channel voice
     """
     # Authenticate before accepting connection
     user = await get_websocket_user(websocket)
@@ -532,13 +628,186 @@ async def websocket_endpoint(websocket: WebSocket):
     
     # Accept connection only after authentication succeeds
     await websocket.accept()
-    print(f"User {user['username']} (ID: {user['id']}) connected to WebSocket")
+    user_id = user['id']
+    await manager.connect(user_id, websocket)
+    print(f"User {user['username']} (ID: {user_id}) connected to WebSocket")
     
     try:
         while True:
             data = await websocket.receive_text()
-            print(f"Received from {user['username']}: {data}")
-            # Broadcast back to the sender (echo) for now
-            await websocket.send_text(f"Echo: {data}")
+            message = json.loads(data)
+            msg_type = message.get('type')
+            
+            # Handle different message types
+            if msg_type == 'voice-call-offer':
+                # 1-on-1 voice call offer
+                target_user_id = message.get('target_user_id')
+                await manager.send_to_user(target_user_id, {
+                    'type': 'voice-call-offer',
+                    'from_user_id': user_id,
+                    'from_username': user['username'],
+                    'offer': message.get('offer')
+                })
+            
+            elif msg_type == 'voice-call-answer':
+                # 1-on-1 voice call answer
+                target_user_id = message.get('target_user_id')
+                await manager.send_to_user(target_user_id, {
+                    'type': 'voice-call-answer',
+                    'from_user_id': user_id,
+                    'answer': message.get('answer')
+                })
+            
+            elif msg_type == 'ice-candidate':
+                # ICE candidate for WebRTC connection
+                target_user_id = message.get('target_user_id')
+                await manager.send_to_user(target_user_id, {
+                    'type': 'ice-candidate',
+                    'from_user_id': user_id,
+                    'candidate': message.get('candidate')
+                })
+            
+            elif msg_type == 'call-end':
+                # End 1-on-1 call
+                target_user_id = message.get('target_user_id')
+                await manager.send_to_user(target_user_id, {
+                    'type': 'call-end',
+                    'from_user_id': user_id
+                })
+            
+            elif msg_type == 'join-voice-channel':
+                # User joins a voice channel
+                channel_id = message.get('channel_id')
+                manager.join_voice_channel(user_id, channel_id)
+                
+                # Get other users in channel
+                other_users = [uid for uid in manager.get_channel_users(channel_id) if uid != user_id]
+                
+                # Notify existing users
+                await manager.send_to_channel(channel_id, {
+                    'type': 'user-joined-voice',
+                    'user_id': user_id,
+                    'username': user['username']
+                }, exclude_user_id=user_id)
+                
+                # Send list of existing users to new joiner
+                await manager.send_to_user(user_id, {
+                    'type': 'voice-channel-users',
+                    'channel_id': channel_id,
+                    'user_ids': other_users
+                })
+            
+            elif msg_type == 'leave-voice-channel':
+                # User leaves voice channel
+                channel_id = message.get('channel_id')
+                manager.leave_voice_channel(user_id, channel_id)
+                
+                # Notify other users
+                await manager.send_to_channel(channel_id, {
+                    'type': 'user-left-voice',
+                    'user_id': user_id,
+                    'username': user['username']
+                })
+            
+            elif msg_type == 'channel-voice-offer':
+                # WebRTC offer for channel voice
+                target_user_id = message.get('target_user_id')
+                channel_id = message.get('channel_id')
+                await manager.send_to_user(target_user_id, {
+                    'type': 'channel-voice-offer',
+                    'from_user_id': user_id,
+                    'channel_id': channel_id,
+                    'offer': message.get('offer')
+                })
+            
+            elif msg_type == 'channel-voice-answer':
+                # WebRTC answer for channel voice
+                target_user_id = message.get('target_user_id')
+                channel_id = message.get('channel_id')
+                await manager.send_to_user(target_user_id, {
+                    'type': 'channel-voice-answer',
+                    'from_user_id': user_id,
+                    'channel_id': channel_id,
+                    'answer': message.get('answer')
+                })
+            
+            elif msg_type == 'channel-ice-candidate':
+                # ICE candidate for channel voice
+                target_user_id = message.get('target_user_id')
+                channel_id = message.get('channel_id')
+                await manager.send_to_user(target_user_id, {
+                    'type': 'channel-ice-candidate',
+                    'from_user_id': user_id,
+                    'channel_id': channel_id,
+                    'candidate': message.get('candidate')
+                })
+            
+            elif msg_type == 'private-message':
+                # Private message between users
+                receiver_id = message.get('receiver_id')
+                msg_text = message.get('message')
+                
+                # Save message to database
+                result = save_message(user_id, receiver_id, msg_text)
+                
+                if result['success']:
+                    # Send to receiver if online
+                    await manager.send_to_user(receiver_id, {
+                        'type': 'new-private-message',
+                        'from_user_id': user_id,
+                        'from_username': user['username'],
+                        'message': msg_text,
+                        'timestamp': result.get('timestamp')
+                    })
+                    
+                    # Confirm to sender
+                    await manager.send_to_user(user_id, {
+                        'type': 'message-sent',
+                        'success': True,
+                        'receiver_id': receiver_id
+                    })
+            
+            elif msg_type == 'channel-message':
+                # Channel message
+                channel_id = message.get('channel_id')
+                msg_text = message.get('message')
+                
+                # Save message to database
+                result = save_channel_message(channel_id, user_id, msg_text)
+                
+                if result['success']:
+                    # Broadcast to all channel members
+                    members = get_channel_members(channel_id)
+                    for member in members:
+                        await manager.send_to_user(member['id'], {
+                            'type': 'new-channel-message',
+                            'channel_id': channel_id,
+                            'from_user_id': user_id,
+                            'from_username': user['username'],
+                            'message': msg_text,
+                            'timestamp': result.get('timestamp')
+                        })
+            
+            elif msg_type == 'status-update':
+                # User status update
+                new_status = message.get('status')
+                result = update_user_status(user_id, new_status)
+                
+                if result['success']:
+                    # Notify all friends
+                    friends = get_friends(user_id)
+                    for friend in friends:
+                        await manager.send_to_user(friend['id'], {
+                            'type': 'friend-status-changed',
+                            'user_id': user_id,
+                            'username': user['username'],
+                            'status': new_status
+                        })
+            
+            else:
+                # Echo unknown messages
+                await websocket.send_text(f"Echo: {data}")
+                
     except WebSocketDisconnect:
+        manager.disconnect(user_id)
         print(f"User {user['username']} disconnected from WebSocket")
